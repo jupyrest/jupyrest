@@ -2,6 +2,12 @@
 
 Jupyrest is a tool that can turn a notebook into a REST API with predefined input and output contracts. This is built upon the [papermill](https://github.com/nteract/papermill) and [scrpabook](https://github.com/nteract/scrapbook) libraries.
 
+## Installation
+
+```
+pip install jupyrest
+```
+
 ## Usage
 
 Suppose you have a notebook `analysis.ipynb` where you have done revenue analysis for a customer. At the end of the notebook, you determine whether the customer is eligible for a enterprise discount or not. You can quickly make your work available as a web api by including a `analysis.config.json` file alongside the notebook:
