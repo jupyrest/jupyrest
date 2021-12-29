@@ -1,0 +1,47 @@
+{
+    "input": {
+        "type": "object",
+        "properties": {
+            "incidents": {
+                "type": "array",
+                "items": {
+                    "$ref": "nbschema://incident"
+                }
+            },
+            "foo": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "incidents",
+            "foo"
+        ]
+    },
+    "output": {
+        "type": "object",
+        "properties": {
+            "new_incidents": {
+                "type": "object",
+                "properties": {
+                    "new_incident_1": {
+                        "$ref": "nbschema://incident"
+                    },
+                    "new_incident_2": {
+                        "$ref": "nbschema://incident"
+                    }
+                },
+                "required": [
+                    "new_incident_1",
+                    "new_incident_2"
+                ]
+            },
+            "bar": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "new_incidents",
+            "bar"
+        ]
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "input": {
+        "type": "object",
+        "properties": {
+            "foo": {
+                "type": "string"
+            },
+            "bar": {
+                "type": "number"
+            },
+            "baz": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "foo",
+            "bar"
+        ]
+    },
+    "output": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "red": {
+                    "type": "string"
+                },
+                "green": {
+                    "type": "string"
+                },
+                "blue": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "red",
+                "green",
+                "blue"
+            ]
+        }
+    }
+}

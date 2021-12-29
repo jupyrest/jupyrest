@@ -1,0 +1,6 @@
+* text eol=lf
+# image files are treated as binary by default.
+###############################################################################
+*.gif   binary
+*.jpg   binary
+*.png   binary

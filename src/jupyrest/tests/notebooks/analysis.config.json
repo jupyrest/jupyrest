@@ -1,0 +1,24 @@
+{
+    "input": {
+        "type": "object",
+        "properties": {
+            "customer_name": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "customer_name"
+        ]
+    },
+    "output": {
+        "type": "object",
+        "properties": {
+            "needs_discount": {
+                "type": "boolean"
+            }
+        },
+        "required": [
+            "needs_discount"
+        ]
+    }
+}

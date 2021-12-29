@@ -1,0 +1,17 @@
+default_language_version:
+  python: python3.7
+repos:
+  - repo: local
+    hooks:
+      - id: generate_notebook_scripts
+        name: generate_notebook_scripts
+        entry: jupytext --from ipynb --to .generated.py:percent --set-kernel python3 --pre-commit
+        language: python
+        pass_filenames: false
+  - repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+        name: black
+        language_version: python3.7
+        exclude: (.)*(.generated.py)

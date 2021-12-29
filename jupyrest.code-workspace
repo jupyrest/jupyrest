@@ -1,0 +1,13 @@
+{
+    "folders": [
+        {
+            "name": "Jupyrest",
+            "path": "./src/jupyrest"
+        },
+    ],
+    "settings": {
+        "jupyter.jupyterServerType": "local",
+        "debug.internalConsoleOptions": "neverOpen",
+        "editor.rulers": [80]
+    }
+}
