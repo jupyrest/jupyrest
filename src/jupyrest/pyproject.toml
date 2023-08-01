@@ -29,7 +29,7 @@ ipykernel = "^6.0.1"
 azure-storage-blob = "^12.8.1"
 nbconvert = "==5.6.1"
 black = "==21.7b0"
-cryptography = "<=3.4.7"
+cryptography = "<=41.0.3"
 opentelemetry-api = "^1.5.0"
 
 [tool.poetry.dev-dependencies]
