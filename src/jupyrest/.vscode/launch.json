@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start Http Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/start_http.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Start Grpc Server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "jupyrest",
+            "args": [
+                "worker",
+                "start",
+                "grpc",
+                "--notebooks-dir=${workspaceFolder}/tests/notebooks"
+            ]
+        },
+        {
+            "name": "Grpc Code Gen",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "grpc_tools.protoc",
+            "args": [
+                "--proto_path=${workspaceFolder}/protobufs",
+                "--python_out=${workspaceFolder}/jupyrest/workers/generated/",
+                "--grpc_python_out=${workspaceFolder}/jupyrest/workers/generated/",
+                "--mypy_out=${workspaceFolder}/jupyrest/workers/generated/",
+                "${workspaceFolder}/protobufs/jupyrest.proto"
+            ]
+        }
+    ]
+}

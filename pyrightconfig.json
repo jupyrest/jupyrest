@@ -1,0 +1,8 @@
+{
+    "reportImportCycles": true,
+    "reportMissingTypeStubs": "none",
+    "include": [
+        "src",
+        "src/jupyrest"
+    ]
+}

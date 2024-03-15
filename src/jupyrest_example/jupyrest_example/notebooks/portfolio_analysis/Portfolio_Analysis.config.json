@@ -1,0 +1,15 @@
+{
+    "id": "portfolio_analysis",
+    "input": {
+        "type": "object",
+        "properties": {
+            "portfolio": {
+                "$ref": "nbschema://portfolio"
+            }
+        },
+        "required": [
+            "portfolio"
+        ],
+        "additionalProperties": false
+    }
+}
