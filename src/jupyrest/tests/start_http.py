@@ -1,7 +1,5 @@
 from pathlib import Path
 import uvicorn
-from jupyrest.workers.http import create_dev_app, InMemoryNotebookEventStoreRepository
-from jupyrest.workers.base import Worker
 from jupyrest.plugin import JupyrestPlugin, PluginManager
 from jupyrest.resolvers import LocalDirectoryResolver
 from jupyrest.executors import IPythonNotebookExecutor
@@ -33,7 +31,5 @@ deps = Dependencies(
     models={"incident": Incident},
 ).get_dependency_bag()
 
-worker = Worker(plugin_man=plugin_man)
 asgi_app = create_asgi_app(deps=deps)
-http_app = create_dev_app(worker=worker, event_store_repository=InMemoryNotebookEventStoreRepository())
 uvicorn.run(app=asgi_app, port=5050)  # type: ignore

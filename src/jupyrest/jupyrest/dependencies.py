@@ -187,7 +187,7 @@ class DefaultNotebookRepository(NotebookRepository):
         else:
             raise NotebookNotFound(notebook_id=notebook_id) 
 
-    async def iter_notebook_ids(self) -> AsyncIterable[str]:
+    async def iter_notebook_ids(self):
         for notebook_id in self._configs.keys():
             yield notebook_id
 

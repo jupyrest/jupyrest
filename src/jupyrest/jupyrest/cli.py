@@ -1,15 +1,8 @@
-from jupyrest.workers.base import Worker
-from jupyrest.executors import IPythonNotebookExecutor
-from jupyrest.nbschema import NotebookSchemaProcessor
-from jupyrest.resolvers import LocalDirectoryResolver
 import typer
 from typing import Optional
 from pathlib import Path
-from jupyrest.plugin import PluginManager, JupyrestPlugin
-from jupyrest.workers.http import create_dev_app, InMemoryNotebookEventStoreRepository
 import uvicorn
-from opentelemetry import trace
-from jupyrest.dependencies import DependencyBag, Dependencies
+from jupyrest.dependencies import Dependencies
 from jupyrest.http.asgi import create_asgi_app
 
 HTTP_PORT = 5050

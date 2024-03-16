@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Protocol, Dict, Any, AsyncGenerator, Type
+from typing import Protocol, Dict, Any, AsyncIterable, Type
 from dataclasses import dataclass
 from .nbschema import SchemaValidationResponse, OutputResult
 from .notebook_config import NotebookConfig
@@ -67,7 +67,7 @@ class NotebookRepository(ABC):
         pass
 
     @abstractmethod
-    async def iter_notebook_ids(self) -> AsyncGenerator[str, None]:
+    async def iter_notebook_ids(self) -> AsyncIterable[str]:
         pass
 
 

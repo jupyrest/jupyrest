@@ -51,7 +51,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
     async def get_notebook_list():
         notebook_repo = deps.notebook_repository
         notebook_ids = []
-        async for notebook_id in (await notebook_repo.iter_notebook_ids()):
+        async for notebook_id in notebook_repo.iter_notebook_ids():
             notebook_ids.append(notebook_id)
         return NotebookList(notebooks=notebook_ids)
 
@@ -114,14 +114,5 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             parameters=execution.parameters,
         )
         return notebook_execution_response
-
-
-    @jupyrest_api_app.get(
-        "/api/notebook_executions/{execution_id}",
-        response_model=NotebookExecutionResponse,
-    )
-    async def get_notebook_execution_artifact(execution_id: str):
-        pass
-
 
     return jupyrest_api_app
