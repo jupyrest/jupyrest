@@ -2,8 +2,6 @@ import json
 from typing import List, Dict, Optional
 from abc import ABC, abstractmethod
 
-from .file_io.core import FileObject
-
 class BaseError(Exception, ABC):
     def __init__(self, code: str, message: str, data: Optional[Dict] = None):
         self.code = code
@@ -61,8 +59,23 @@ class NotebookNotFound(BaseError):
         )
 
 class NotebookExecutionArtifactNotFound(BaseError):
-    def __init__(self, file_object: FileObject):
+    def __init__(self, artifact_name: str):
         super().__init__(
             code="NOTEBOOK_EXECUTION_ARTIFACT_NOT_FOUND",
-            message=f"Notebook execution artifact {file_object!r} not found.",
+            message=f"Notebook execution artifact {artifact_name} not found.",
+        )
+
+class FileObjectNotFound(BaseError):
+    def __init__(self, path: str):
+        self.path = path
+        super().__init__(
+            code="FILE_OBJECT_NOT_FOUND",
+            message=f"File object {self.path} not found.",
+        )
+
+class UnrecognizedFileObjectScheme(BaseError):
+    def __init__(self, scheme: str):
+        super().__init__(
+            code="UNRECOGNIZED_FILE_OBJECT_SCHEME",
+            message=f"Unrecognized scheme: {scheme}",
         )

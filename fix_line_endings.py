@@ -1,8 +1,6 @@
-from calendar import c
 import os
 from pathlib import Path
 
-cwd = Path(__file__).parent
 
 def convert_line_endings(directory):
     extensions_to_convert = ['.py', '.ipynb', '.toml', '.lock']
@@ -25,5 +23,7 @@ def convert_line_endings(directory):
                 except UnicodeDecodeError:
                     print(f"Error decoding file: {filepath}")
 
-directory = str(cwd)
-convert_line_endings(directory)
+if __name__ == "__main__":
+    directory = str(Path(__file__).parent)
+    extensions_to_convert = ['.py', '.ipynb', '.toml', '.lock']
+    convert_line_endings(directory)

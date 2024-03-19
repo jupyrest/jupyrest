@@ -27,7 +27,8 @@ from .contracts import (
     NotebookExecutionFileNamer,
     DependencyBag
 )
-from .file_io.in_memory import InMemoryFileObject
+from .file_io.core import FileObjectClient, FileObjectScheme
+from .file_io.in_memory import InMemoryFileObjectClientImpl
 from .notebook_execution.entity import NotebookExecution
 from .notebook_execution.commands import complete_execution
 from .notebook_config import NotebookConfig
@@ -40,19 +41,19 @@ import json
 
 class InMemoryNotebookExecutionRepository(NotebookExecutionRepository):
     def __init__(self) -> None:
-        self._executions: Dict[str, NotebookExecution] = {}
+        self._executions: Dict[str, str] = {}
 
     async def get(self, execution_id: str) -> NotebookExecution:
         try:
-            return self._executions[execution_id]
+            return NotebookExecution.parse_raw(self._executions[execution_id])
         except KeyError:
             raise NotebookExecutionNotFound(execution_id=execution_id)
 
     async def save(self, execution: NotebookExecution) -> None:
-        self._executions[execution.execution_id] = execution
+        self._executions[execution.execution_id] = execution.json()
 
     async def create(self, execution: NotebookExecution) -> None:
-        self._executions[execution.execution_id] = execution
+        self._executions[execution.execution_id] = execution.json()
 
 class DefaultNotebookConverter(NotebookConverter):
 
@@ -226,7 +227,9 @@ class Dependencies:
         return DependencyBag(
             notebook_execution_repository=InMemoryNotebookExecutionRepository(),
             notebook_repository=DefaultNotebookRepository(notebooks_dir=self.notebooks_dir, nbschema=self.nbschema),
-            file_obj=InMemoryFileObject,
+            file_obj_client=FileObjectClient(client_map={
+                FileObjectScheme.IN_MEMORY: InMemoryFileObjectClientImpl()
+            }),
             notebook_converter=DefaultNotebookConverter(),
             notebook_parameterizier=DefaultNotebookParameterizier(plugin=self.plugin),
             notebook_executor=self.plugin.get_notebook_executor(),

@@ -32,4 +32,9 @@ deps = Dependencies(
 ).get_dependency_bag()
 
 asgi_app = create_asgi_app(deps=deps)
+import sys
+import asyncio
+if sys.platform == 'win32':
+    loop = asyncio.ProactorEventLoop()
+    asyncio.set_event_loop(loop)
 uvicorn.run(app=asgi_app, port=5050)  # type: ignore

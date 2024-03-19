@@ -4,19 +4,12 @@ from datetime import datetime
 import json
 from .entity import NotebookExecution, NotebookExecutionStatus, NotebookExecutionCompletionStatus, NotebookExecutionCompletionDetails
 from ..contracts import DependencyBag
-from ..errors2 import InvalidInputSchema, InvalidExecutionState
+from ..errors2 import InvalidInputSchema
+from .common import _assert_status
 import logging
 import asyncio
 
 logger = logging.getLogger(__name__)
-
-def _assert_status(execution: NotebookExecution, expected_status: List[NotebookExecutionStatus]):
-    if execution.status not in expected_status:
-        raise InvalidExecutionState(
-            execution_id=execution.execution_id,
-            current_status=execution.status,
-            expected_status=list(map(lambda s: s.value, expected_status)),
-        )
 
 def create(notebook_id: str, parameters: Dict[str, Any]) -> NotebookExecution:
     return NotebookExecution(
@@ -79,20 +72,26 @@ async def complete_execution(
         logger.exception(f"Execution error {execution.execution_id}")
         execution.status = NotebookExecutionStatus.INTERNAL_ERROR
     else:
-        end_time = datetime.utcnow()
+        end_time = datetime.now()
         execution.status = NotebookExecutionStatus.COMPLETED
         if exception is not None:
             completion_status = NotebookExecutionCompletionStatus.FAILED
         else:
             completion_status = NotebookExecutionCompletionStatus.SUCCEEDED
         output_result = deps.notebook_output_reader.get_output(notebook=notebook)
+
         ipynb_path = deps.notebook_execution_file_namer.get_ipynb_name(execution=execution)
         html_report_path = deps.notebook_execution_file_namer.get_html_report_name(execution=execution)
         html_path = deps.notebook_execution_file_namer.get_html_name(execution=execution)
-        ipynb, html_report, html = await asyncio.gather(
-            deps.file_obj.create(ipynb_path, deps.notebook_converter.convert_notebook_to_str(notebook=notebook)),
-            deps.file_obj.create(html_report_path, deps.notebook_converter.convert_notebook_to_html(notebook=notebook, report_mode=True)),
-            deps.file_obj.create(html_path, deps.notebook_converter.convert_notebook_to_html(notebook=notebook, report_mode=False))
+
+        ipynb = deps.file_obj_client.new_file_object(path=ipynb_path)
+        html_report = deps.file_obj_client.new_file_object(path=html_report_path)
+        html = deps.file_obj_client.new_file_object(path=html_path)
+
+        await asyncio.gather(
+            deps.file_obj_client.set_content(ipynb, deps.notebook_converter.convert_notebook_to_str(notebook=notebook)),
+            deps.file_obj_client.set_content(html_report, deps.notebook_converter.convert_notebook_to_html(notebook=notebook, report_mode=True)),
+            deps.file_obj_client.set_content(html, deps.notebook_converter.convert_notebook_to_html(notebook=notebook, report_mode=False))
         )
         execution.completion_details = NotebookExecutionCompletionDetails(
             completion_status=completion_status,
@@ -100,8 +99,8 @@ async def complete_execution(
             output_result=output_result,
             exception=exception,
             ipynb=ipynb,
-            html_report_path=html_report,
-            html_path=html
+            html_report=html_report,
+            html=html
         )
     finally:
         await deps.notebook_execution_repository.save(execution=execution)

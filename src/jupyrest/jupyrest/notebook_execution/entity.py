@@ -4,6 +4,8 @@ from datetime import datetime
 from ..file_io.core import FileObject
 from ..model import NamedModel
 from ..nbschema import OutputResult
+
+
 class NotebookExecutionStatus(str, Enum):
     INVALID = "INVALID"
     ACCEPTED = "ACCEPTED"
@@ -22,8 +24,8 @@ class NotebookExecutionCompletionDetails(NamedModel):
     output_result: OutputResult
     exception: Optional[str]
     ipynb: FileObject 
-    html_report_path: FileObject
-    html_path: FileObject
+    html_report: FileObject
+    html: FileObject
 
     class Config:
         __ns__ = "jupyrest.notebook_execution.entity.NotebookExecutionCompletionDetails"

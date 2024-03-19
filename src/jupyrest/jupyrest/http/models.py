@@ -11,12 +11,12 @@ class NotebookExecutionResponse(BaseModel):
     status: str
     notebook_id: str
     parameters: Dict[str, Any]
+    artifacts: Dict[str, str]
 
 class NotebookExecutionAsyncResponse(BaseModel):
-    id: str
+    execution_id: str
     status: str
     notebook_id: str
-
 
 class NotebookResponse(BaseModel):
     notebook_id: str

@@ -6,6 +6,7 @@ from .notebook_config import NotebookConfig
 from nbformat.notebooknode import NotebookNode
 from .executors import BaseNotebookExeuctor
 from .notebook_execution.entity import NotebookExecution
+from .file_io.core import FileObjectClient
 
 class NotebookInputOutputValidator(ABC):
     @abstractmethod
@@ -100,7 +101,7 @@ class NotebookExecutionFileNamer(ABC):
 class DependencyBag:
     notebook_execution_repository: NotebookExecutionRepository
     notebook_repository: NotebookRepository
-    file_obj: Type["FileObject"]
+    file_obj_client: FileObjectClient
     notebook_converter: NotebookConverter
     notebook_parameterizier: NotebookParameterizier
     notebook_executor: BaseNotebookExeuctor
@@ -109,5 +110,3 @@ class DependencyBag:
     notebook_execution_task_handler: NotebookExecutionTaskHandler
     notebook_execution_file_namer: NotebookExecutionFileNamer
 
-
-from .file_io.core import FileObject

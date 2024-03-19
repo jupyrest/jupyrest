@@ -83,3 +83,26 @@ class HTTPResource():
         pass
 
 ```
+
+# Dependencies
+
+```
+
+Jupyrest Service
+
+    - notebooks_dir
+    - model_collection
+    - Notebook Execution Location
+        - Local Executor
+            - run on the machine serving the request
+        - Remote Executor
+            - Submit on a task queue
+                - Azure Storage Queue
+    - Execution Metadata
+        - InMemory
+        - Azure Blob
+    - Execution Artifact Storage
+        - InMemory
+        - Azure Blob
+
+```

@@ -1,23 +1,18 @@
 from typing import Dict
 
-from .core import FileObject, FileNotFound
-from ..errors2 import NotebookExecutionArtifactNotFound
-from ..contracts import DependencyBag
+from .core import FileObjectClientImpl, FileNotFound
 
-_files: Dict[str, str] = {}
 
-class InMemoryFileObject(FileObject):
+class InMemoryFileObjectClientImpl(FileObjectClientImpl):
 
-    async def get_content(self, deps: DependencyBag) -> str:
-        global _files
+    def __init__(self) -> None:
+        self._files: Dict[str, str] = {}
+
+    async def get_content(self, path: str) -> str:
         try:
-            return _files[self.path]
+            return self._files[path]
         except KeyError as ke:
             raise FileNotFound() from ke
 
-    async def set_content(self, deps: DependencyBag, content: str):
-        global _files
-        _files[self.path] = content
-
-    class Config:
-        __ns__ = "jupyrest.InMemoryFileObject"
+    async def set_content(self, path: str, content: str):
+        self._files[path] = content

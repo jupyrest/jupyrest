@@ -1,3 +1,5 @@
+from email.policy import HTTP
+from math import e
 from typing import Protocol, List, Annotated
 from importlib.resources import files, as_file
 from ..notebook_execution.entity import (
@@ -5,6 +7,7 @@ from ..notebook_execution.entity import (
     NotebookExecutionStatus,
 )
 from ..notebook_execution.commands import create, accept, begin_execution
+from ..notebook_execution.queries import get_execution, get_execution_artifact, ExecutionArtifactType
 from .models import (
     NotebookExecutionRequest,
     NotebookExecutionResponse,
@@ -19,13 +22,15 @@ from ..errors2 import (
     InvalidExecutionState,
     NotebookExecutionNotFound,
     NotebookNotFound,
+    NotebookExecutionArtifactNotFound,
+    FileObjectNotFound
 )
 from .. import project_root
 import json
 from ..dependencies import DependencyBag, NotebookRepository
-from fastapi import FastAPI, Request, BackgroundTasks, Depends
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, status
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 def create_asgi_app(deps: DependencyBag) -> FastAPI:
 
@@ -33,7 +38,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
 
     jupyrest_api_app.mount(
         "/static",
-        StaticFiles(directory=str(project_root / "workers" / "static")),
+        StaticFiles(directory=str(project_root / "http" / "static")),
         name="static",
     )
 
@@ -41,7 +46,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
     def error_to_http_exception(request: Request, exc: BaseError):
         if isinstance(exc, (InvalidInputSchema, InvalidExecutionState)):
             status_code = 400
-        elif isinstance(exc, (NotebookExecutionNotFound, NotebookNotFound)):
+        elif isinstance(exc, (NotebookExecutionNotFound, NotebookNotFound, NotebookExecutionArtifactNotFound, FileObjectNotFound)):
             status_code = 404
         else:
             status_code = 500
@@ -51,7 +56,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
     async def get_notebook_list():
         notebook_repo = deps.notebook_repository
         notebook_ids = []
-        async for notebook_id in notebook_repo.iter_notebook_ids():
+        async for notebook_id in notebook_repo.iter_notebook_ids(): #type: ignore
             notebook_ids.append(notebook_id)
         return NotebookList(notebooks=notebook_ids)
 
@@ -69,7 +74,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
         )
 
     @jupyrest_api_app.post(
-        "/api/notebooks/{notebook_id}/execute", response_model=NotebookExecutionAsyncResponse
+        "/api/notebooks/{notebook_id}/execute", response_model=NotebookExecutionAsyncResponse, status_code=202
     )
     async def post_notebook_execution(
         notebook_id: str,
@@ -84,12 +89,12 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             execution=execution,
             deps=deps)
         content = NotebookExecutionAsyncResponse(
-            id=execution.execution_id,
+            execution_id=execution.execution_id,
             status=execution.status,
             notebook_id=execution.notebook_id,
         )
         headers = {
-            "Location": f"/api/notebook_executions/{execution.execution_id}",
+            "Location": f"/api/notebook_executions/{execution.execution_id}/status",
         }
         return JSONResponse(
             status_code=202,
@@ -97,22 +102,54 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             headers=headers
         )
 
+    @jupyrest_api_app.get("/api/notebook_executions/{execution_id}/status", responses={200: {"description": "The execution status has not completed yet."}, 302: {"description": "The execution has completed or failed."}})
+    async def get_notebook_execution_status(execution_id: str):
+        execution = await get_execution(execution_id=execution_id, deps=deps)
+        if execution.status in (NotebookExecutionStatus.COMPLETED, NotebookExecutionStatus.INTERNAL_ERROR):
+            return JSONResponse(
+                status_code=302,
+                headers={
+                    "Location": f"/api/notebook_executions/{execution_id}"
+                }
+            )
+        else:
+            return JSONResponse(
+                status_code=200,
+                headers={
+                    "Location": f"/api/notebook_executions/{execution_id}/status",
+                    "Retry-After": "1"
+                }
+            )
 
     @jupyrest_api_app.get(
         "/api/notebook_executions/{execution_id}",
         response_model=NotebookExecutionResponse,
     )
     async def get_notebook_execution(execution_id: str):
-        execution_repository = deps.notebook_execution_repository
-        execution = await execution_repository.get(
-            execution_id=execution_id
-        )
+        execution = await get_execution(execution_id=execution_id, deps=deps)
+        artifacts = {
+            artifact_type.value: f"/api/notebook_executions/{execution_id}/artifacts/{artifact_type.value}"
+            for artifact_type in ExecutionArtifactType
+        }
         notebook_execution_response = NotebookExecutionResponse(
             execution_id=execution.execution_id,
             status=execution.status,
             notebook_id=execution.notebook_id,
             parameters=execution.parameters,
+            artifacts=artifacts
         )
         return notebook_execution_response
-
+    
+    @jupyrest_api_app.get(
+        "/api/notebook_executions/{execution_id}/artifacts/{artifact_type}",
+    )
+    async def get_notebook_execution_artifact(execution_id: str, artifact_type: ExecutionArtifactType):
+        content = await get_execution_artifact(execution_id=execution_id, deps=deps, artifact_type=artifact_type)
+        
+        if artifact_type in (ExecutionArtifactType.HTML, ExecutionArtifactType.HTML_REPORT):
+            return HTMLResponse(content=content)
+        elif artifact_type == ExecutionArtifactType.IPYNB:
+            return JSONResponse(content=json.loads(content))
+        else:
+            raise HTTPException(status_code=404, detail="Artifact not found")
     return jupyrest_api_app
