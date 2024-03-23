@@ -1,44 +1,31 @@
 import pytest
+from xprocess import ProcessStarter
 from pathlib import Path
-from jupyrest.workers.base import Worker
-from jupyrest.plugin import BasePlugin, JupyrestPlugin, PluginManager
-from jupyrest.nbschema import NotebookSchemaProcessor
-from jupyrest.executors import IPythonNotebookExecutor
-from jupyrest.resolvers import LocalDirectoryResolver
+import aiohttp
+import sys
 
-
-class Notebooks:
-    io_contract_example = "io_contract_example"
-    model_io = "model_io"
-    error = "error"
+cwd = Path(__file__).parent
 
 
 @pytest.fixture
-def notebooks_dir() -> Path:
-    return Path(__file__).parent / "notebooks"
+def anyio_backend():
+    return "asyncio"
 
 
 @pytest.fixture
-def default_plugin(notebooks_dir) -> BasePlugin:
-    return JupyrestPlugin(
-        resolver=LocalDirectoryResolver(notebooks_dir=notebooks_dir, refresh=True),
-        nbschema=NotebookSchemaProcessor(),
-        executor=IPythonNotebookExecutor(),
-    )
+@pytest.mark.anyio
+async def http_server(xprocess):
+    class Starter(ProcessStarter):
+        pattern = "Uvicorn running"  # type: ignore
+        args = [sys.executable, str(cwd / "start_http.py")]  # type: ignore
 
+        def check(self, stdout, stderr):
+            return self.pattern in stdout + stderr
 
-@pytest.fixture
-def plugin_name() -> str:
-    return PluginManager.DEFAULT_PLUGIN_NAME
+    xprocess.ensure("http_server", Starter)
 
+    # This provides the process name to the test function
+    yield aiohttp.ClientSession(base_url="http://localhost:5050")
 
-@pytest.fixture
-def plugin_man(default_plugin: BasePlugin, plugin_name: str) -> PluginManager:
-    pm = PluginManager()
-    pm.register(plugin_name=plugin_name, plugin=default_plugin)
-    return pm
-
-
-@pytest.fixture
-def worker(plugin_man: PluginManager):
-    return Worker(plugin_man=plugin_man)
+    # Clean up after the test
+    xprocess.getinfo("http_server").terminate()

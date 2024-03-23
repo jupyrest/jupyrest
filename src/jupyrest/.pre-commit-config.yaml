@@ -8,3 +8,4 @@ repos:
         name: black
         language_version: python3.9
         exclude: (.)*(.generated.py)
+        additional_dependencies: ['click==8.0.4']

@@ -7,13 +7,11 @@ from pydantic import BaseModel, Field
 from nbformat.notebooknode import NotebookNode
 from papermill import __version__
 from papermill.iorw import load_notebook_node
-from opentelemetry import trace
 import logging
 from jupyrest.nbschema import NotebookSchemaProcessor
 
 from .notebook_config import NotebookConfig, NotebookConfigFile
 
-tracer = trace.get_tracer(__name__)
 logger = logging.getLogger(__name__)
 
 
@@ -50,10 +48,9 @@ class LocalDirectoryResolver(BaseResolver):
     def notebook_config_from_file(self, config_path: Path) -> NotebookConfig:
         notebook_path = self.get_notebook_path_from_config_path(config_path=config_path)
         notebook_config_file = NotebookConfigFile.parse_raw(notebook_path.read_text())
-        notebook_id = (
-            notebook_config_file.id
-            or notebook_path.relative_to(self.notebooks_dir).as_posix().removesuffix(".ipynb")
-        )
+        notebook_id = notebook_config_file.id or notebook_path.relative_to(
+            self.notebooks_dir
+        ).as_posix().removesuffix(".ipynb")
         notebook_config = NotebookConfig(
             id=notebook_id,
             notebook_path=notebook_path.as_posix(),

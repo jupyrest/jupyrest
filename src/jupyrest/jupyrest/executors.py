@@ -6,10 +6,8 @@ from typing import Optional
 from nbclient.client import NotebookClient
 from nbclient.exceptions import CellExecutionError, CellTimeoutError
 import logging
-from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
-tracer = trace.get_tracer(__name__)
 
 
 class BaseNotebookExeuctor(ABC):
@@ -30,14 +28,6 @@ class BaseNotebookExeuctor(ABC):
         pass
 
 
-class OtelNotebookClient(NotebookClient):
-    """A NotebookClient that emits OpenTelemetry Spans."""
-
-    async def async_execute(self, reset_kc: bool = False, **kwargs) -> NotebookNode:
-        with tracer.start_as_current_span("nbclient.async_execute"):
-            return await super().async_execute(reset_kc=reset_kc, **kwargs)
-
-
 class IPythonNotebookExecutor(BaseNotebookExeuctor):
     def __init__(
         self, kernel_name="python3", timeout_seconds=600, language="python"
@@ -52,7 +42,7 @@ class IPythonNotebookExecutor(BaseNotebookExeuctor):
     async def execute_notebook_async(self, notebook: NotebookNode) -> Optional[str]:
         exception: Optional[str] = None
         try:
-            await OtelNotebookClient(
+            await NotebookClient(
                 nb=notebook,
                 timeout=self._timeout_seconds,
                 kernel_name=self._kernel_name,

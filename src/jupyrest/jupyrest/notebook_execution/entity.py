@@ -7,7 +7,6 @@ from ..nbschema import OutputResult
 
 
 class NotebookExecutionStatus(str, Enum):
-    INVALID = "INVALID"
     ACCEPTED = "ACCEPTED"
     EXECUTING = "EXECUTING"
     COMPLETED = "COMPLETED"
@@ -18,23 +17,26 @@ class NotebookExecutionCompletionStatus(str, Enum):
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
 
+
 class NotebookExecutionCompletionDetails(NamedModel):
     completion_status: NotebookExecutionCompletionStatus
     end_time: datetime
     output_result: OutputResult
     exception: Optional[str]
-    ipynb: FileObject 
+    ipynb: FileObject
     html_report: FileObject
     html: FileObject
 
     class Config:
         __ns__ = "jupyrest.notebook_execution.entity.NotebookExecutionCompletionDetails"
 
+
 class NotebookExecution(NamedModel):
     execution_id: str
     notebook_id: str
     parameters: Dict[str, Any]
-    status: str
+    status: NotebookExecutionStatus
+    accepted_time: datetime
     start_time: Optional[datetime]
 
     completion_details: Optional[NotebookExecutionCompletionDetails] = None
