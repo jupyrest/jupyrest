@@ -2,7 +2,7 @@
 name = "jupyrest"
 version = "0.1.0"
 description = "A tool to expose Jupyter notebooks as a REST API."
-authors = ["Koushik Krishnan <kokrishn@microsoft.com>"]
+authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
