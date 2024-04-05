@@ -9,9 +9,7 @@ import os
 import logging
 
 notebooks_dir = Path(__file__).parent / "notebooks"
-notebooks_dir = Path(
-    "C:\\Users\\Koushik\\code\\jupyrest2\\src\\jupyrest\\tests\\notebooks"
-)
+
 container_name = "jupyrest-executions"
 container_client = ContainerClient.from_connection_string(
     conn_str=os.environ["AzureWebJobsStorage"], container_name=container_name
