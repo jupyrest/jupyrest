@@ -20,6 +20,3 @@ class NotebookConfig(BaseModel):
 
     def load_notebook_node(self) -> NotebookNode:
         return load_notebook_node(notebook_path=self.notebook_path)
-
-
-

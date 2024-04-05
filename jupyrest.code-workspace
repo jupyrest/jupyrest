@@ -11,6 +11,10 @@
         {
             "name": "Azure Function",
             "path": "./src/jupyrest_function"
+        },
+        {
+            "name": "jupyrest_function2",
+            "path": "src/jupyrest_function2"
         }
     ],
     "settings": {

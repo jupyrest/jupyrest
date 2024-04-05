@@ -1,35 +1,39 @@
 import azure.functions as func
-import datetime
-import json
 import logging
-from jupyrest.workers.http import create_azure_function, create_dev_app
-from jupyrest.plugin import JupyrestPlugin
-from jupyrest.resolvers import LocalDirectoryResolver
-from jupyrest.nbschema import NotebookSchemaProcessor
-from jupyrest.executors import IPythonNotebookExecutor
-from jupyrest.workers.http import InMemoryNotebookEventStoreRepository
-from jupyrest.workers.base import Worker
-from jupyrest.plugin import PluginManager
-
+from fastapi import dependencies
+from jupyrest.dependencies import Dependencies
+from jupyrest.azure.execution_task_handler import AzureQueueNotebookExecutionTaskHandler
+from jupyrest.http.asgi import create_asgi_app
+from jupyrest.notebook_execution.commands import complete_execution
+from azure.storage.queue.aio import QueueClient
+from azure.storage.blob.aio import ContainerClient
+from azure.core.exceptions import ResourceExistsError
 from pathlib import Path
-
+import os
+import logging
 notebooks_dir = Path(__file__).parent / "notebooks"
-
-plugin_man = PluginManager()
-plugin = JupyrestPlugin(
-    resolver=LocalDirectoryResolver(notebooks_dir=notebooks_dir),
-    nbschema=NotebookSchemaProcessor(),
-    executor=IPythonNotebookExecutor(),
+container_name = "jupyrest-executions"
+container_client = ContainerClient.from_connection_string(
+    conn_str=os.environ["AzureWebJobsStorage"],
+    container_name=container_name
 )
-plugin_man.register(plugin_name=PluginManager.DEFAULT_PLUGIN_NAME, plugin=plugin)
-
-worker = Worker(plugin_man=plugin_man)
-fastapi_app = create_dev_app(worker=worker, event_store_repository=InMemoryNotebookEventStoreRepository())
-
-function_app = create_azure_function(fastapi_app=fastapi_app)
+queue_name = "jupyrest-executions"
+queue_client = QueueClient.from_connection_string(
+    conn_str=os.environ["AzureWebJobsStorage"],
+    queue_name=queue_name
+)
+dependencies = Dependencies(
+    notebooks_dir=notebooks_dir,
+    models={}
+).get_azure_dependency_bag(container_client=container_client, queue_client=queue_client)
+fastapi_app = create_asgi_app(deps=dependencies)
 
 app = func.AsgiFunctionApp(app=fastapi_app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.queue_trigger(arg_name="msg", queue_name='myqueue', connection='AzureWebJobsStorage')
-def queue_trigger(msg: func.QueueMessage):
-    logging.info(f"Python queue trigger function processed a queue item: {msg.get_body().decode('utf-8')}")
+@app.queue_trigger(arg_name="msg", queue_name=queue_name, connection='AzureWebJobsStorage')
+async def queue_trigger(msg: func.QueueMessage):
+    try:
+        message = AzureQueueNotebookExecutionTaskHandler.deserialize_message(msg.get_json())
+        await complete_execution(execution_id=message.execution_id, deps=dependencies)
+    except Exception as e:
+        logging.exception("An error occurred while processing a queue message.")

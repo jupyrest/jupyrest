@@ -1,9 +1,8 @@
-from typing import Dict, Any, Optional, Protocol
+from typing import Dict, Any, Optional
 from enum import Enum
 from datetime import datetime
-from ..file_io.core import FileObject
+from ..file_object import FileObject
 from ..model import NamedModel
-from ..nbschema import OutputResult
 
 
 class NotebookExecutionStatus(str, Enum):
@@ -21,11 +20,11 @@ class NotebookExecutionCompletionStatus(str, Enum):
 class NotebookExecutionCompletionDetails(NamedModel):
     completion_status: NotebookExecutionCompletionStatus
     end_time: datetime
-    output_result: OutputResult
-    exception: Optional[str]
     ipynb: FileObject
     html_report: FileObject
     html: FileObject
+    exception: Optional[FileObject]
+    output: Optional[FileObject]
 
     class Config:
         __ns__ = "jupyrest.notebook_execution.entity.NotebookExecutionCompletionDetails"
@@ -38,7 +37,6 @@ class NotebookExecution(NamedModel):
     status: NotebookExecutionStatus
     accepted_time: datetime
     start_time: Optional[datetime]
-
     completion_details: Optional[NotebookExecutionCompletionDetails] = None
 
     class Config:

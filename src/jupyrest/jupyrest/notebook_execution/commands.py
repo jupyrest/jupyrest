@@ -9,7 +9,7 @@ from .entity import (
     NotebookExecutionCompletionDetails,
 )
 from ..contracts import DependencyBag
-from ..errors2 import InvalidInputSchema
+from ..error import InvalidInputSchema
 from .common import _assert_status
 import logging
 import asyncio
@@ -48,18 +48,19 @@ async def begin_execution(
     _assert_status(
         execution=execution, expected_status=[NotebookExecutionStatus.ACCEPTED]
     )
-    execution.status = NotebookExecutionStatus.EXECUTING
-    execution.start_time = datetime.utcnow()
-    await deps.notebook_execution_repository.save(execution=execution)
     await deps.notebook_execution_task_handler.submit_execution_task(
         execution_id=execution.execution_id, deps=deps
     )
 
 
 async def complete_execution(
-    execution: NotebookExecution,
+    execution_id: str,
     deps: DependencyBag,
 ):
+    execution = await deps.notebook_execution_repository.get(execution_id)
+    execution.status = NotebookExecutionStatus.EXECUTING
+    execution.start_time = datetime.utcnow()
+    await deps.notebook_execution_repository.save(execution=execution)
     _assert_status(
         execution=execution, expected_status=[NotebookExecutionStatus.EXECUTING]
     )
@@ -97,6 +98,23 @@ async def complete_execution(
         ipynb = deps.file_obj_client.new_file_object(path=ipynb_path)
         html_report = deps.file_obj_client.new_file_object(path=html_report_path)
         html = deps.file_obj_client.new_file_object(path=html_path)
+        exception_file = None
+        output_file = None
+        if output_result.present:
+            output_path = deps.notebook_execution_file_namer.get_output_name(
+                execution=execution
+            )
+            output_file = deps.file_obj_client.new_file_object(path=output_path)
+            await deps.file_obj_client.set_content(
+                output_file, output_result.json_str
+            )
+
+        if exception is not None:
+            exception_path = deps.notebook_execution_file_namer.get_exception_name(
+                execution=execution
+            )
+            exception_file = deps.file_obj_client.new_file_object(path=exception_path)
+            await deps.file_obj_client.set_content(exception_file, exception)
 
         await asyncio.gather(
             deps.file_obj_client.set_content(
@@ -116,11 +134,12 @@ async def complete_execution(
                 ),
             ),
         )
+
         execution.completion_details = NotebookExecutionCompletionDetails(
             completion_status=completion_status,
             end_time=end_time,
-            output_result=output_result,
-            exception=exception,
+            output=output_file,
+            exception=exception_file,
             ipynb=ipynb,
             html_report=html_report,
             html=html,

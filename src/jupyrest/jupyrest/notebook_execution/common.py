@@ -1,7 +1,7 @@
 from .entity import NotebookExecution, NotebookExecutionStatus
 from typing import List
 
-from ..errors2 import InvalidExecutionState
+from ..error import InvalidExecutionState
 
 def _assert_status(execution: NotebookExecution, expected_status: List[NotebookExecutionStatus]):
     if execution.status not in expected_status:

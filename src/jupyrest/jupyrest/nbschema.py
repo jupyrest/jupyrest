@@ -100,8 +100,10 @@ class NotebookSchemaProcessor:
     OUTPUTS_KEY = "nbschema_outputs"
     SCHEME = "nbschema"
 
-    def __init__(self, models: Optional[ModelCollection] = None) -> None:
-        self._models = models or ModelCollection()
+    def __init__(self, models: Dict[str, Type[NbSchemaBase]]) -> None:
+        self._models = ModelCollection()
+        for model_alias, model_type in models.items():
+            self._models.add_model(alias=model_alias, model_type=model_type)
         self._ref_resolver = RefResolver(
             "", {}, handlers={self.SCHEME: self._resolve_ref}
         )
@@ -117,10 +119,7 @@ class NotebookSchemaProcessor:
     def _get_validator(self, schema: Dict):
         Draft7Validator.check_schema(schema)
         return Draft7Validator(schema=schema)
-        if not self._models.is_empty():
-            return Draft7Validator(schema=schema, resolver=self._ref_resolver)
-        else:
-            return Draft7Validator(schema=schema)
+
 
     def validate_instance(
         self, instance: Dict, schema: Dict

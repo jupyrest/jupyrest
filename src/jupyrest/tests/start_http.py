@@ -1,13 +1,13 @@
 from pathlib import Path
 import uvicorn
-from jupyrest.plugin import JupyrestPlugin, PluginManager
-from jupyrest.resolvers import LocalDirectoryResolver
-from jupyrest.executors import IPythonNotebookExecutor
+from jupyrest.default_impl.executor import IPythonNotebookExecutor
 from jupyrest.nbschema import NotebookSchemaProcessor, ModelCollection, NbSchemaBase
+from jupyrest.infra.in_memory.builder import InMemoryApplicationBuilder
 from datetime import datetime
 from jupyrest.http.asgi import create_asgi_app
-from jupyrest.dependencies import Dependencies
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
 class Incident(NbSchemaBase):
     start_time: datetime
@@ -17,23 +17,9 @@ class Incident(NbSchemaBase):
 
 def start_http_server():
     notebooks_dir = Path(__file__).parent / "notebooks"
-    mc = ModelCollection()
-    mc.add_model(alias="incident", model_type=Incident)
+    builder = InMemoryApplicationBuilder(notebooks_dir=notebooks_dir, models={"incident": Incident})
 
-    plugin = JupyrestPlugin(
-        resolver=LocalDirectoryResolver(notebooks_dir=notebooks_dir),
-        nbschema=NotebookSchemaProcessor(models=mc),
-        executor=IPythonNotebookExecutor(),
-    )
-    plugin_man = PluginManager()
-    plugin_man.register(plugin_name=PluginManager.DEFAULT_PLUGIN_NAME, plugin=plugin)
-
-    deps = Dependencies(
-        notebooks_dir=notebooks_dir,
-        models={"incident": Incident},
-    ).get_dependency_bag()
-
-    asgi_app = create_asgi_app(deps=deps)
+    asgi_app = create_asgi_app(deps=builder.build())
     import sys
     import asyncio
 

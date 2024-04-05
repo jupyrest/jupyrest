@@ -7,7 +7,8 @@
                 "type": "array",
                 "items": {
                     "$ref": "nbschema://incident"
-                }
+                },
+                "minItems": 2
             },
             "foo": {
                 "type": "string"

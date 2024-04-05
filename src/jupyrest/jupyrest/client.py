@@ -1,46 +1,73 @@
 import aiohttp
 import asyncio
-import time
-import json
-from urllib.parse import urljoin
+from typing import Dict
+from jupyrest.http.models import NotebookExecutionResponse, NotebookExecutionStatus, NotebookExecutionAsyncResponse
 
-class NotebookExecutionClient:
-    def __init__(self, base_url):
-        self.base_url = base_url
 
-    async def execute_notebook(self, notebook_id, parameters, max_seconds_timeout=300):
-        execute_url = urljoin(self.base_url, f"/notebooks/{notebook_id}/execute")
-        async with aiohttp.ClientSession() as session:
-            async with session.post(execute_url, json=dict(parameters=parameters)) as response:
-                response.raise_for_status()
-                assert response.status == 202
-                location_url = response.headers.get("Location")
-                assert location_url is not None, "Location header not found"
-                data = await response.json()
-                execution_id = data.get("execution_id")
-                assert execution_id is not None, "Execution id not found"
-        num_retries = 0
-        while True and num_retries < max_seconds_timeout:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(urljoin(self.base_url, location_url), allow_redirects=True) as response:
-                    num_retries += 1
-                    response.raise_for_status()
-                    if response.status == 200:
+class JupyrestClient:
+    def __init__(self, endpoint: str) -> None:
+        self.endpoint = endpoint
+
+    def session(self):
+        return aiohttp.ClientSession(base_url=self.endpoint, raise_for_status=True)
+
+    async def execute_notebook(self, notebook_id, parameters) -> NotebookExecutionAsyncResponse:
+        async with self.session() as session:
+            execute_url = f"/api/notebooks/{notebook_id}/execute"
+            async with session.post(
+                execute_url,
+                json=dict(parameters=parameters),
+            ) as response:
+                response_json = await response.json()
+                return NotebookExecutionAsyncResponse.parse_obj(response_json)
+
+    async def poll(self, execution_id: str) -> NotebookExecutionResponse:
+        execution_url = f"/api/notebook_executions/{execution_id}" 
+        while True:
+            async with self.session() as session:
+                async with session.get(execution_url) as response:
+                    response_json = await response.json()
+                    execution_response = NotebookExecutionResponse.parse_obj(response_json)
+                    if execution_response.status == NotebookExecutionStatus.COMPLETED:
+                        return execution_response
+                    else:
                         await asyncio.sleep(1)
-                    elif response.status == 200:
-                        data = await response.json()
-                        return data
 
-if __name__ == "__main__":
-    # Example usage:
-    async def main():
-        client = NotebookExecutionClient("http://localhost:5050/api")
-        l = set()
-        for x in range(1):
-            t = client.execute_notebook("error", parameters={})
-            l.add(t)
-        await asyncio.gather(*l)
-        # execution_data = await client.check_execution_status(execution_id)
-        # print("Execution data:", execution_data)
+    async def execute_notebook_until_complete(self, notebook_id, parameters):
+        execution = await self.execute_notebook(notebook_id, parameters)
+        return await self.poll(execution_id=execution.execution_id)
+    
+    
+    async def get_execution(self, execution_id: str) -> NotebookExecutionResponse:
+        async with self.session() as session:
+            execution_url = f"/api/notebook_executions/{execution_id}"
+            async with session.get(execution_url) as response:
+                response_json = await response.json()
+                return NotebookExecutionResponse.parse_obj(response_json)
 
-    asyncio.run(main())
+    async def get_execution_html(self, execution_id: str, report_mode: bool = False) -> str:
+        execution = await self.get_execution(execution_id)
+        assert execution.artifacts is not None
+        async with self.session() as session:
+            url = execution.artifacts["html_report"] if report_mode else execution.artifacts["html"]
+            async with session.get(url) as response:
+                return await response.text()
+            
+    async def get_execution_ipynb(self, execution_id: str) -> Dict:
+        execution = await self.get_execution(execution_id)
+        assert execution.artifacts is not None
+        async with self.session() as session:
+            async with session.get(execution.artifacts["ipynb"]) as response:
+                return await response.json()
+    
+    async def get_execution_output(self, execution_id: str):
+        execution = await self.get_execution(execution_id)
+        assert execution.artifacts is not None
+        async with self.session() as session:
+            async with session.get(execution.artifacts["output"]) as response:
+                return await response.json()
+
+    async def get_notebook(self, notebook_id: str):
+        async with self.session() as session:
+            async with session.get(f"/api/notebooks/{notebook_id}") as response:
+                return await response.json()

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, parse_obj_as
-from typing import Callable, Type, Dict
+from typing import Callable, Type, Dict, cast
+from typing_extensions import Self
 import json
 
 named_model_registry: Dict[str, Type["NamedModel"]] = {}
@@ -87,7 +88,7 @@ class NamedModel(BaseModel):
         return self.__config__.json_dumps(d)
 
     @classmethod
-    def parse_obj(cls, data, *args, **kwargs):
+    def parse_obj(cls, data, *args, **kwargs) -> Self:
         NS_KEY = cls._get_ns_key()
 
         def data_has_ns_info(o):
@@ -114,7 +115,7 @@ class NamedModel(BaseModel):
         if data_has_ns_info(data):
             subclass = get_subclass_for_ns(data[NS_KEY])
             if subclass is not None:
-                return parse_obj_as(subclass, data)
+                return cast(Self, parse_obj_as(subclass, data))
 
         return parse_obj_as(cls, data)
 

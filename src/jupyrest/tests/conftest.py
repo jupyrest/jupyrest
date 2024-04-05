@@ -3,6 +3,7 @@ from xprocess import ProcessStarter
 from pathlib import Path
 import aiohttp
 import sys
+from jupyrest.client import JupyrestClient
 
 cwd = Path(__file__).parent
 
@@ -14,7 +15,7 @@ def anyio_backend():
 
 @pytest.fixture
 @pytest.mark.anyio
-async def http_server(xprocess):
+async def http_endpoint(xprocess):
     class Starter(ProcessStarter):
         pattern = "Uvicorn running"  # type: ignore
         args = [sys.executable, str(cwd / "start_http.py")]  # type: ignore
@@ -25,7 +26,12 @@ async def http_server(xprocess):
     xprocess.ensure("http_server", Starter)
 
     # This provides the process name to the test function
-    yield aiohttp.ClientSession(base_url="http://localhost:5050")
+    yield "http://localhost:5050"
 
     # Clean up after the test
     xprocess.getinfo("http_server").terminate()
+
+
+@pytest.fixture
+def jupyrest_client():
+    return JupyrestClient("http://localhost:7071")

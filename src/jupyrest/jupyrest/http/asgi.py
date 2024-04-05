@@ -1,7 +1,8 @@
-from email.policy import HTTP
-from math import e
 from typing import Protocol, List, Annotated
 from importlib.resources import files, as_file
+from urllib import response
+
+import json
 from ..notebook_execution.entity import (
     NotebookExecution,
     NotebookExecutionStatus,
@@ -19,7 +20,7 @@ from .models import (
     NotebookList,
     NotebookExecutionAsyncResponse,
 )
-from ..errors2 import (
+from ..error import (
     BaseError,
     InvalidInputSchema,
     InternalError,
@@ -29,23 +30,14 @@ from ..errors2 import (
     NotebookExecutionArtifactNotFound,
     FileObjectNotFound,
 )
-from .. import project_root
-import json
-from ..dependencies import DependencyBag, NotebookRepository
+from ..contracts import DependencyBag
 from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, status
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 
 def create_asgi_app(deps: DependencyBag) -> FastAPI:
 
     jupyrest_api_app = FastAPI(title="Jupyrest API")
-
-    jupyrest_api_app.mount(
-        "/static",
-        StaticFiles(directory=str(project_root / "http" / "static")),
-        name="static",
-    )
 
     @jupyrest_api_app.exception_handler(BaseError)
     def error_to_http_exception(request: Request, exc: BaseError):
@@ -105,36 +97,7 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             status=execution.status,
             notebook_id=execution.notebook_id,
         )
-        headers = {
-            "Location": f"/api/notebook_executions/{execution.execution_id}/status",
-        }
-        return JSONResponse(status_code=202, content=content.dict(), headers=headers)
-
-    @jupyrest_api_app.get(
-        "/api/notebook_executions/{execution_id}/status",
-        responses={
-            200: {"description": "The execution status has not completed yet."},
-            302: {"description": "The execution has completed or failed."},
-        },
-    )
-    async def get_notebook_execution_status(execution_id: str):
-        execution = await get_execution(execution_id=execution_id, deps=deps)
-        if execution.status in (
-            NotebookExecutionStatus.COMPLETED,
-            NotebookExecutionStatus.INTERNAL_ERROR,
-        ):
-            return JSONResponse(
-                status_code=302,
-                headers={"Location": f"/api/notebook_executions/{execution_id}"},
-            )
-        else:
-            return JSONResponse(
-                status_code=200,
-                headers={
-                    "Location": f"/api/notebook_executions/{execution_id}/status",
-                    "Retry-After": "1",
-                },
-            )
+        return content
 
     @jupyrest_api_app.get(
         "/api/notebook_executions/{execution_id}",
@@ -159,10 +122,23 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             notebook_execution_response.execution_completion_status = (
                 execution.completion_details.completion_status
             )
-            artifacts = {
-                artifact_type.value: f"/api/notebook_executions/{execution_id}/artifacts/{artifact_type.value}"
-                for artifact_type in ExecutionArtifactType
-            }
+            artifacts = {}
+            if execution.completion_details.output is not None:
+                notebook_execution_response.has_output = True
+                artifacts[ExecutionArtifactType.OUTPUT.value] = f"/api/notebook_executions/{execution_id}/artifacts/{ExecutionArtifactType.OUTPUT.value}"
+            else:
+                notebook_execution_response.has_output = False
+            if execution.completion_details.exception is not None:
+                notebook_execution_response.has_exception = True
+                artifacts[ExecutionArtifactType.EXCEPTION.value] = f"/api/notebook_executions/{execution_id}/artifacts/{ExecutionArtifactType.EXCEPTION.value}"
+            else:
+                notebook_execution_response.has_exception = False
+            if execution.completion_details.html is not None:
+                artifacts[ExecutionArtifactType.HTML.value] = f"/api/notebook_executions/{execution_id}/artifacts/{ExecutionArtifactType.HTML.value}"
+            if execution.completion_details.ipynb is not None:
+                artifacts[ExecutionArtifactType.IPYNB.value] = f"/api/notebook_executions/{execution_id}/artifacts/{ExecutionArtifactType.IPYNB.value}"
+            if execution.completion_details.html_report is not None:
+                artifacts[ExecutionArtifactType.HTML_REPORT.value] = f"/api/notebook_executions/{execution_id}/artifacts/{ExecutionArtifactType.HTML_REPORT.value}"
             notebook_execution_response.artifacts = artifacts
         return notebook_execution_response
 
@@ -181,8 +157,13 @@ def create_asgi_app(deps: DependencyBag) -> FastAPI:
             ExecutionArtifactType.HTML_REPORT,
         ):
             return HTMLResponse(content=content)
-        elif artifact_type == ExecutionArtifactType.IPYNB:
+        elif artifact_type in (
+            ExecutionArtifactType.IPYNB,
+            ExecutionArtifactType.OUTPUT,
+        ):
             return JSONResponse(content=json.loads(content))
+        elif artifact_type == ExecutionArtifactType.EXCEPTION:
+            return PlainTextResponse(content=content)
         else:
             raise HTTPException(status_code=404, detail="Artifact not found")
 
