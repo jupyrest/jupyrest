@@ -10,7 +10,7 @@
         },
         {
             "name": "Azure Function",
-            "path": "src/jupyrest_function2"
+            "path": "src/jupyrest_function"
         }
     ]
 }
