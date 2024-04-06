@@ -253,5 +253,3 @@ display_response(response)
 # Notice how the parameters have been __converted__ into a Portfolio Python object in the notebook. Isn't that just so cool!
 #
 # The beauty is that our notebook has *no idea* that is being used as a REST API. It is all plain-old Python through and through.
-
-# %%
