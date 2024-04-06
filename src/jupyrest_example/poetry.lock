@@ -1385,36 +1385,34 @@ name = "jupyrest"
 version = "0.2.0"
 description = "A tool to expose Jupyter notebooks as a REST API."
 optional = false
-python-versions = ">=3.9,<3.12"
-files = []
-develop = false
+python-versions = "<3.12,>=3.9"
+files = [
+    {file = "jupyrest-0.2.0-py3-none-any.whl", hash = "sha256:42b785a97cc8830a35ae0642c23ee9c1c5e256041ca6e05fd51935378617ea08"},
+    {file = "jupyrest-0.2.0.tar.gz", hash = "sha256:237a46f0b023f64de236b7ba338029b4d2aa8132007996059e2e9593d8423e55"},
+]
 
 [package.dependencies]
-aiofiles = "^23.2.1"
-aiohttp = "^3.9.3"
-anyio = "^4.3.0"
-azure-storage-blob = "^12.19.1"
-azure-storage-queue = "^12.9.0"
-entrypoints = "^0.4"
-fastapi = "^0.110.0"
-ipykernel = "^6.29.3"
+aiofiles = ">=23.2.1,<24.0.0"
+aiohttp = ">=3.9.3,<4.0.0"
+anyio = ">=4.3.0,<5.0.0"
+azure-storage-blob = ">=12.19.1,<13.0.0"
+azure-storage-queue = ">=12.9.0,<13.0.0"
+entrypoints = ">=0.4,<0.5"
+fastapi = ">=0.110.0,<0.111.0"
+ipykernel = ">=6.29.3,<7.0.0"
 ipython = [
     {version = ">=8.18.1,<8.19.0", markers = "python_version >= \"3.9\" and python_version < \"3.10\""},
     {version = ">=8.19.0", markers = "python_version >= \"3.10\""},
 ]
-jsonschema = "^4.21.1"
-nbclient = "^0.10.0"
-nbconvert = "^7.16.3"
-nbformat = "^5.10.3"
-notebook = "^7.1.2"
-papermill = "^2.5.0"
-pydantic = "^1.10.14"
-scrapbook = "^0.5.0"
-uvicorn = "^0.29.0"
-
-[package.source]
-type = "directory"
-url = "../jupyrest"
+jsonschema = ">=4.21.1,<5.0.0"
+nbclient = ">=0.10.0,<0.11.0"
+nbconvert = ">=7.16.3,<8.0.0"
+nbformat = ">=5.10.3,<6.0.0"
+notebook = ">=7.1.2,<8.0.0"
+papermill = ">=2.5.0,<3.0.0"
+pydantic = ">=1.10.14,<2.0.0"
+scrapbook = ">=0.5.0,<0.6.0"
+uvicorn = ">=0.29.0,<0.30.0"
 
 [[package]]
 name = "jupyter-client"
@@ -3506,4 +3504,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "de386f76d9e961434764b4cf275b4cee6b617217244187a6a6cc8829d94bb251"
+content-hash = "8f1d23d4530bc239183dfb3069e41c58d9883cda7fdadbdcc7b9be0f0cf5b8f7"
