@@ -2,16 +2,13 @@
 
 ## Setting up Dev Environment
 
-This project uses VSCode devcontainers. In VSCode you can do Ctrl+Shift+P and `Clone Repository in Container Volume`.
+Install:
+- Python 3.9+
 
-Then in the terminal run:
+Run:
+`pip install poetry pre-commit jupytext`
 
-```bash
-cd ./src/jupyrest/
-sh dev_setup.sh
-code .
-```
+Then:
+`pre-commit install`
 
-## Running Tests
-
-All tests are available in the VSCode Test Explorer. Prior to running the tests, start the [Azurite Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio-code) and the Grpc Server. You can do this in the Run and Debug Tab, select `Start Grpc Server`.
+Run `poetry install` in any of the projects in the `src/` folder to set it up.

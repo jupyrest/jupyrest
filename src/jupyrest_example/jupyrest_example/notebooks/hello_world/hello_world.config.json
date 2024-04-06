@@ -1,0 +1,25 @@
+{
+    "id": "hello_world",
+    "input": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "name"
+        ]
+    },
+    "output": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "name"
+        ]
+    }
+}
