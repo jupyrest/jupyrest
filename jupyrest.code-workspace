@@ -4,10 +4,13 @@
             "name": "Jupyrest",
             "path": "./src/jupyrest"
         },
-    ],
-    "settings": {
-        "jupyter.jupyterServerType": "local",
-        "debug.internalConsoleOptions": "neverOpen",
-        "editor.rulers": [80]
-    }
+        {
+            "name": "Example",
+            "path": "./src/jupyrest_example"
+        },
+        {
+            "name": "Azure Function",
+            "path": "src/jupyrest_function"
+        }
+    ]
 }

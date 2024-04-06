@@ -1,5 +1,9 @@
 from pydantic import BaseModel, parse_obj_as
-from typing import Callable, Type, Dict
+from typing import Callable, Type, Dict, cast
+from typing_extensions import Self
+import json
+
+named_model_registry: Dict[str, Type["NamedModel"]] = {}
 
 
 class NamedModelConflict(Exception):
@@ -15,10 +19,11 @@ class NamedModel(BaseModel):
 
     ```
     class MyNamedModel(NamedModel):
-        __ns__ = "models/MyNamedModel"
-
         prop1: str
         prop2: int
+
+        class Config:
+            __ns__ = "models/MyNamedModel"
     ```
 
     The benefit of a NamedModel is that it knows how to
@@ -38,17 +43,32 @@ class NamedModel(BaseModel):
     ```
     """
 
-    # a mapping from namespaces -> subclasses of NamedModel
-    __nsmap__: Dict[str, Type["NamedModel"]] = {}
-    # the name of this type (the namespace)
-    __ns__: str
+    @classmethod
+    def _get_ns_key(cls) -> str:
+        if hasattr(cls.Config, "NS_KEY"):
+            return cls.Config.NS_KEY
+        else:
+            return NamedModel.Config.NS_KEY
+
+    @classmethod
+    def get_class_namespace(cls):
+        """Get the namespace for this class."""
+        if hasattr(cls.Config, "__ns__"):
+            return str(getattr(cls.Config, "__ns__"))
+        else:
+            raise ValueError(f"Class {cls} does not have a namespace")
 
     @classmethod
     def _iter_subclasses(cls):
         """Iterate over the subclasses for a
         particular type `cls` including `cls` itself.
         """
-        yield cls
+        global named_model_registry
+        if cls is not NamedModel:
+            if cls.get_class_namespace() not in named_model_registry:
+                named_model_registry[cls.get_class_namespace()] = cls
+
+            yield cls
         for sk in cls.__subclasses__():
             yield from sk._iter_subclasses()
 
@@ -57,12 +77,19 @@ class NamedModel(BaseModel):
         to save the name of the model.
         """
         d = super().dict(*args, **kwargs)
-        d[self.Config.NS_KEY] = getattr(self, self.Config.NS_KEY)
+        NS_KEY = self._get_ns_key()
+        d[NS_KEY] = self.get_class_namespace()
         return d
 
+    def json(self, *args, **kwargs):
+        d = self.__config__.json_loads(super().json(*args, **kwargs))
+        NS_KEY = self._get_ns_key()
+        d[NS_KEY] = self.get_class_namespace()
+        return self.__config__.json_dumps(d)
+
     @classmethod
-    def parse_obj(cls, data, *args, **kwargs):
-        NS_KEY = cls.Config.NS_KEY
+    def parse_obj(cls, data, *args, **kwargs) -> Self:
+        NS_KEY = cls._get_ns_key()
 
         def data_has_ns_info(o):
             """This will tell us whether we should
@@ -75,39 +102,26 @@ class NamedModel(BaseModel):
 
         def subclass_has_name(name: str) -> Callable[[Type["NamedModel"]], bool]:
             def _check_name(sk: Type["NamedModel"]) -> bool:
-                return getattr(sk, NS_KEY) == name
+                return sk.get_class_namespace() == name
 
             return _check_name
 
         def get_subclass_for_ns(ns: str):
-            if ns not in NamedModel.__nsmap__:
-                # find the correct subclass
-                sks = filter(subclass_has_ns_info, cls._iter_subclasses())
-                sks = filter(subclass_has_name(data[NS_KEY]), sks)
-                sks = set(sks)
-
-                # we should only have at most 1 subclass
-                # for a given name
-                if len(sks) > 1:
-                    raise NamedModelConflict(f"{sks} have conflicting names {ns}")
-                elif len(sks) == 1:
-                    sk = sks.pop()
-                    NamedModel.__nsmap__[ns] = sk
-                else:
-                    return None
-
-            return NamedModel.__nsmap__[ns]
+            if ns not in named_model_registry:
+                list(cls._iter_subclasses())
+            return named_model_registry.get(ns, None)
 
         # if data has the namespace information we are looking for
         if data_has_ns_info(data):
             subclass = get_subclass_for_ns(data[NS_KEY])
             if subclass is not None:
-                return parse_obj_as(subclass, data)
+                return cast(Self, parse_obj_as(subclass, data))
 
         return parse_obj_as(cls, data)
 
     class Config:
-
+        # the name of this type (the namespace)
+        __ns__: str
         NS_KEY: str = "__ns__"
 
         @staticmethod
@@ -115,7 +129,7 @@ class NamedModel(BaseModel):
             """Augment the json schema to add the required
             namespace property.
             """
-            NS_KEY = model.Config.NS_KEY
+            NS_KEY = model._get_ns_key()
 
             # by default, the description is the class docstring
             # this is not relevant so we will remove it

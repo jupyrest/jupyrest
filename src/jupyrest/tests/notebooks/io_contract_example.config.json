@@ -1,4 +1,5 @@
 {
+    "id": "io_contract_example",
     "input": {
         "type": "object",
         "properties": {

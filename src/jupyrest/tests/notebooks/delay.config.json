@@ -1,0 +1,13 @@
+{
+    "id": "delay",
+    "input": {
+        "type": "object",
+        "properties": {
+            "delay_seconds": {
+                "type": "integer",
+                "minimum": 0
+            }
+        },
+        "required": ["delay_seconds"]
+    }
+}
