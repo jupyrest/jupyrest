@@ -33,5 +33,5 @@ async def http_endpoint(xprocess):
 
 
 @pytest.fixture
-def jupyrest_client():
-    return JupyrestClient("http://localhost:7071")
+def jupyrest_client(http_endpoint):
+    return JupyrestClient(http_endpoint)

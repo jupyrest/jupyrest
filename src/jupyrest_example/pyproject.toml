@@ -13,7 +13,7 @@ jupyrest = {path = "../jupyrest"}
 
 
 [tool.poetry.group.dev.dependencies]
-notebook = "^6.5.4"
+notebook = "^7.1.2"
 
 
 [build-system]

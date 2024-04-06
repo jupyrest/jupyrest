@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jupyrest"
-version = "0.1.0"
+version = "0.2.0"
 description = "A tool to expose Jupyter notebooks as a REST API."
 authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
 
