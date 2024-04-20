@@ -13,16 +13,48 @@
 # ---
 
 # %% [markdown]
-# # Getting Started With Jupyrest
+# # Jupyrest
 #
 #
 # Jupyrest is a library that converts __Jupyter Notebooks__ into __REST APIs__. It turns notebooks into *notebook functions*.
 #
 # This guide will demonstrate how to interact with a notebook function and other nice features that Jupyrest provides.
 #
+# ## Getting Started
+#
+# Prerequisites:
+# - [git](https://git-scm.com/downloads)
+# - Python 3.9
+#   - [Mac](https://www.python.org/downloads/macos/)
+#   - [Windows (Windows Store version recommended)](https://apps.microsoft.com/detail/9p7qfqmjrfp7?hl=en-us&gl=US)
+#   - [Linux](https://docs.python-guide.org/starting/install3/linux/)
+# - [poetry](https://python-poetry.org/docs/#installation)
+#
+# Download the example project:
+#
+# ```bash
+# git clone https://github.com/microsoft/jupyrest.git
+# cd jupyrest/src/jupyrest_example
+# ```
+#
+# Set up the environment:
+#
+# ```bash
+# poetry install
+# poetry shell
+# pre-commit install
+# ```
+#
+# For here onwards, make sure you have run `poetry shell` before running anything on the command line. This will ensure you are using the right Python virtual environment.
+
+# %% [markdown]
 # ## Starting the Web Server
 #
-# See the `start_http.py` file in this directory for an example of how to configure a Jupyrest application and start the web server.
+# Run:
+#
+# ```
+# python start_http.py
+# ```
 #
 # ## Initializing a Jupyrest Client
 #

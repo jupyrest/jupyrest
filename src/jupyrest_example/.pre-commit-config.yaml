@@ -1,0 +1,18 @@
+default_language_version:
+  python: python3.9
+repos:
+  - repo: local
+    hooks:
+      - id: generate_notebook_scripts
+        name: generate_notebook_scripts
+        entry: jupytext --from ipynb --to .generated.py:percent --pre-commit
+        language: python
+        pass_filenames: false
+  - repo: https://github.com/psf/black
+    rev: 21.7b0
+    hooks:
+      - id: black
+        name: black
+        language_version: python3.9
+        exclude: (.)*(.generated.py)
+        additional_dependencies: ['click==8.0.4']
