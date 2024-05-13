@@ -1,9 +1,8 @@
 [tool.poetry]
 name = "jupyrest-docs"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-readme = "README.md"
+description = "Documentation for jupyrest."
+authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
 packages = [{include = "jupyrest_docs"}]
 
 [tool.poetry.dependencies]
