@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "jupyrest-docs"
+version = "0.1.0"
+description = "Documentation for jupyrest."
+authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
+packages = [{include = "jupyrest_docs"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+jupyter-book = "^1.0.0"
+jupyrest = {path = "../jupyrest"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

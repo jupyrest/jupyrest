@@ -11,6 +11,10 @@
         {
             "name": "Azure Function",
             "path": "src/jupyrest_function"
+        },
+        {
+            "name": "Docs",
+            "path": "src/jupyrest_docs"
         }
     ]
 }
