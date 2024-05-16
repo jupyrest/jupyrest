@@ -6,8 +6,9 @@ authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
 packages = [{include = "jupyrest_docs"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.12"
 jupyter-book = "^1.0.0"
+jupyrest = {path = "../jupyrest"}
 
 
 [build-system]
