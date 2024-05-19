@@ -2,7 +2,7 @@
 
 Jupyrest is a tool that can turn a notebook into a REST API with predefined input and output contracts.
 
-View documentation and usage on [jupyrest.io](https://jupyrest.io).
+View documentation and usage on <a href="https://jupyrest.io" target="_blank">jupyrest.io</a>.
 
 Jupyrest lets you:
 
