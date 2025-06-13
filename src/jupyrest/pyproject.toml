@@ -5,7 +5,7 @@ description = "A tool to expose Jupyter notebooks as a REST API."
 authors = ["Koushik Krishnan <unequal09swims@icloud.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.14"
 jsonschema = "^4.21.1"
 nbformat = "^5.10.3"
 nbclient = "^0.10.0"
